@@ -54,15 +54,15 @@ impl Parser {
         Parser {tokens: Tokenizer::new("()").tokenize(src), i: 0}
     }
 
-    fn finished(&self) -> bool {
+    pub fn finished(&self) -> bool {
         self.i == self.tokens.len()
     }
 
-    fn token(&self) -> io::Result<&str> {
+    pub fn token(&self) -> io::Result<&str> {
         self.lookahead(0)
     }
 
-    fn lookahead(&self, distance: usize) -> io::Result<&str> {
+    pub fn lookahead(&self, distance: usize) -> io::Result<&str> {
         let index = self.i + distance;
         match self.tokens.get(index) {
             Some(s) => Ok(s.as_str()),
@@ -70,7 +70,7 @@ impl Parser {
         }
     }
 
-    fn check(&mut self, target_token: &str) -> io::Result<()> {
+    pub fn check(&mut self, target_token: &str) -> io::Result<()> {
         let actual = self.token()?;
         if actual == target_token {
             self.advance();
@@ -80,19 +80,19 @@ impl Parser {
         }
     }
 
-    fn advance(&mut self) {
+    pub fn advance(&mut self) {
         self.advance_by(1);
     }
 
-    fn advance_by(&mut self, distance: usize) {
+    pub fn advance_by(&mut self, distance: usize) {
         self.i += distance;
     }
 
-    fn at_close(&self) -> io::Result<bool> {
+    pub fn at_close(&self) -> io::Result<bool> {
         Ok(self.token()? == ")")
     }
 
-    fn snag_symbols(&mut self) -> io::Result<Vec<String>> {
+    pub fn snag_symbols(&mut self) -> io::Result<Vec<String>> {
         self.check("(")?;
         let mut result = Vec::new();
         while !self.at_close()? {
@@ -102,7 +102,7 @@ impl Parser {
         Ok(result)
     }
 
-    fn snag(&mut self) -> io::Result<String> {
+    pub fn snag(&mut self) -> io::Result<String> {
         let token = self.token()?;
         let result = String::from(token);
         self.advance();
