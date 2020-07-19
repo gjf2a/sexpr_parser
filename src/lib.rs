@@ -54,6 +54,10 @@ impl Parser {
         Parser {tokens: Tokenizer::new("()").tokenize(src), i: 0}
     }
 
+    fn finished(&self) -> bool {
+        self.i == self.tokens.len()
+    }
+
     fn token(&self) -> io::Result<&str> {
         self.lookahead(0)
     }
@@ -108,8 +112,54 @@ impl Parser {
 
 #[cfg(test)]
 mod tests {
+    use crate::Parser;
+
+    const TEST_1: &str = "(+ (* 2 3) (- 5 4))";
+
     #[test]
-    fn it_works() {
-        assert_eq!(2 + 2, 4);
+    fn token_test() {
+        let tokens_1: Vec<&str> = vec!["(", "+", "(", "*", "2", "3", ")", "(", "-", "5", "4", ")", ")"];
+
+        snag_test(&tokens_1);
+        check_test(&tokens_1);
+        lookahead_test(&tokens_1);
+    }
+
+    fn snag_test(tokens: &Vec<&str>) {
+        let mut p = Parser::new(TEST_1);
+        for token in tokens.iter() {
+            assert_eq!(*token, p.snag().unwrap().as_str());
+        }
+        assert!(p.finished());
+    }
+
+    fn check_test(tokens: &Vec<&str>) {
+        let mut p2 = Parser::new(TEST_1);
+        for token in tokens.iter() {
+            p2.check(*token).unwrap();
+        }
+        assert!(p2.finished());
+    }
+
+    fn lookahead_test(tokens: &Vec<&str>) {
+        let mut p = Parser::new(TEST_1);
+        for i in 0..tokens.len() - 1 {
+            assert_eq!(tokens[i], p.token().unwrap());
+            assert_eq!(tokens[i+1], p.lookahead(1).unwrap());
+            p.advance();
+        }
+        p.check(")").unwrap()
+    }
+
+    #[test]
+    fn snag_symbols_test() {
+        let mut p = Parser::new(TEST_1);
+        p.check("(").unwrap();
+        p.check("+").unwrap();
+        assert_eq!(p.snag_symbols().unwrap(), vec!["*", "2", "3"]);
+        assert_eq!(p.snag_symbols().unwrap(), vec!["-", "5", "4"]);
+        assert!(p.at_close().unwrap());
+        p.check(")").unwrap();
+        assert!(p.finished());
     }
 }
