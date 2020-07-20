@@ -44,6 +44,12 @@ impl Tokenizer {
     }
 }
 
+#[derive(Debug,Clone,Eq, PartialEq)]
+pub enum SexprTree {
+    Sym(String),
+    Sub(Vec<SexprTree>)
+}
+
 pub struct Parser {
     tokens: Vec<String>,
     i: usize
@@ -52,6 +58,27 @@ pub struct Parser {
 impl Parser {
     pub fn new(src: &str) -> Self {
         Parser {tokens: Tokenizer::new("()").tokenize(src), i: 0}
+    }
+
+    pub fn tree(src: &str) -> io::Result<SexprTree> {
+        let mut parser = Parser::new(src);
+        parser.tree_help()
+    }
+
+    fn tree_help(&mut self) -> io::Result<SexprTree> {
+        if self.finished() {
+            Ok(SexprTree::Sub(vec![]))
+        } else if self.token()? == "(" {
+            let mut parts = Vec::new();
+            self.advance();
+            while !self.at_close()? {
+                parts.push(self.tree_help()?);
+            }
+            self.advance();
+            Ok(SexprTree::Sub(parts))
+        } else {
+            Ok(SexprTree::Sym(self.snag()?))
+        }
     }
 
     pub fn finished(&self) -> bool {
@@ -113,6 +140,7 @@ impl Parser {
 #[cfg(test)]
 mod tests {
     use crate::Parser;
+    use std::io;
 
     const TEST_1: &str = "(+ (* 2 3) (- 5 4))";
 
@@ -161,5 +189,13 @@ mod tests {
         assert!(p.at_close().unwrap());
         p.check(")").unwrap();
         assert!(p.finished());
+    }
+
+    #[test]
+    fn tree_test() -> io::Result<()> {
+        let tree = Parser::tree(TEST_1)?;
+        println!("{:?}", tree);
+        assert_eq!(format!("{:?}", tree), r#"Sub([Sym("+"), Sub([Sym("*"), Sym("2"), Sym("3")]), Sub([Sym("-"), Sym("5"), Sym("4")])])"#);
+        Ok(())
     }
 }
