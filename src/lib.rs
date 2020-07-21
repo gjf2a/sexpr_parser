@@ -1,6 +1,7 @@
 use std::io;
 use std::io::{Error, ErrorKind};
 use std::collections::BTreeSet;
+use crate::SexprTree::{Sym, Sub};
 
 pub fn errorize<T>(msg: String) -> io::Result<T> {
     Err(Error::new(ErrorKind::Other, msg.as_str()))
@@ -48,6 +49,28 @@ impl Tokenizer {
 pub enum SexprTree {
     Sym(String),
     Sub(Vec<SexprTree>)
+}
+
+impl SexprTree {
+    pub fn head(&self) -> Option<String> {
+        match self {
+            Sym(s) => Some(s.clone()),
+            Sub(v) => v.get(0).and_then(|s| s.head())
+        }
+    }
+
+    pub fn flatten(&self) -> Vec<String> {
+        let mut result = Vec::new();
+        self.flatten_help(&mut result);
+        result
+    }
+
+    fn flatten_help(&self, flattened: &mut Vec<String>) {
+        match self {
+            Sym(s) => flattened.push(s.clone()),
+            Sub(v) => v.iter().for_each(|s| s.flatten_help(flattened))
+        }
+    }
 }
 
 pub struct Parser {
@@ -194,8 +217,9 @@ mod tests {
     #[test]
     fn tree_test() -> io::Result<()> {
         let tree = Parser::build_parse_tree(TEST_1)?;
-        println!("{:?}", tree);
         assert_eq!(format!("{:?}", tree), r#"Sub([Sym("+"), Sub([Sym("*"), Sym("2"), Sym("3")]), Sub([Sym("-"), Sym("5"), Sym("4")])])"#);
+        assert_eq!(tree.head().unwrap().as_str(), "+");
+        assert_eq!(tree.flatten(), vec!["+", "*", "2", "3", "-", "5", "4"]);
         Ok(())
     }
 }
