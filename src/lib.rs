@@ -60,7 +60,7 @@ impl Parser {
         Parser {tokens: Tokenizer::new("()").tokenize(src), i: 0}
     }
 
-    pub fn tree(src: &str) -> io::Result<SexprTree> {
+    pub fn build_parse_tree(src: &str) -> io::Result<SexprTree> {
         let mut parser = Parser::new(src);
         parser.tree_help()
     }
@@ -193,7 +193,7 @@ mod tests {
 
     #[test]
     fn tree_test() -> io::Result<()> {
-        let tree = Parser::tree(TEST_1)?;
+        let tree = Parser::build_parse_tree(TEST_1)?;
         println!("{:?}", tree);
         assert_eq!(format!("{:?}", tree), r#"Sub([Sym("+"), Sub([Sym("*"), Sym("2"), Sym("3")]), Sub([Sym("-"), Sym("5"), Sym("4")])])"#);
         Ok(())
