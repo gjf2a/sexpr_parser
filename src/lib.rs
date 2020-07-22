@@ -52,6 +52,13 @@ pub enum SexprTree {
 }
 
 impl SexprTree {
+    pub fn is(&self, target: &str) ->  bool {
+        match self {
+            Sub(_) => false,
+            Sym(s) => s == target
+        }
+    }
+
     pub fn head(&self) -> Option<String> {
         match self {
             Sym(s) => Some(s.clone()),
@@ -164,6 +171,7 @@ impl Parser {
 mod tests {
     use crate::Parser;
     use std::io;
+    use crate::SexprTree::{Sym, Sub};
 
     const TEST_1: &str = "(+ (* 2 3) (- 5 4))";
 
@@ -217,6 +225,14 @@ mod tests {
     #[test]
     fn tree_test() -> io::Result<()> {
         let tree = Parser::build_parse_tree(TEST_1)?;
+        match &tree {
+            Sym(_) => assert!(false),
+            Sub(v) => {
+                assert!(v[0].is("+"));
+                assert_eq!(v[1].head().unwrap().as_str(), "*");
+                assert_eq!(v[2].head().unwrap().as_str(), "-");
+            }
+        }
         assert_eq!(format!("{:?}", tree), r#"Sub([Sym("+"), Sub([Sym("*"), Sym("2"), Sym("3")]), Sub([Sym("-"), Sym("5"), Sym("4")])])"#);
         assert_eq!(tree.head().unwrap().as_str(), "+");
         assert_eq!(tree.flatten(), vec!["+", "*", "2", "3", "-", "5", "4"]);
