@@ -52,6 +52,10 @@ pub enum SexprTree {
 }
 
 impl SexprTree {
+    pub fn sym(s: &str) -> Self {
+        Sym(String::from(s))
+    }
+
     pub fn is(&self, target: &str) ->  bool {
         match self {
             Sub(_) => false,
@@ -169,7 +173,7 @@ impl Parser {
 
 #[cfg(test)]
 mod tests {
-    use crate::Parser;
+    use crate::{Parser, SexprTree};
     use std::io;
     use crate::SexprTree::{Sym, Sub};
 
@@ -229,6 +233,7 @@ mod tests {
             Sym(_) => assert!(false),
             Sub(v) => {
                 assert!(v[0].is("+"));
+                assert_eq!(v[0], SexprTree::sym("+"));
                 assert_eq!(v[1].head().unwrap().as_str(), "*");
                 assert_eq!(v[2].head().unwrap().as_str(), "-");
             }
